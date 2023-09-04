@@ -4,10 +4,14 @@ import PackageJson from './package.json' assert { type: 'json' }
 
 const config = {
   input: 'src/index.ts',
-  output: {
-    file: PackageJson.main,
-    format: 'esm'
-  },
+  output: [
+    {
+      file: PackageJson.main
+    },
+    {
+      file: 'test/index.js'
+    }
+  ],
   plugins: [RollupPluginDelete(), RollupPluginTypescript()]
 }
 

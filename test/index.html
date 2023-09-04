@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monitor Web Test</title>
+
+    <script type="module">
+      import { initiate } from './index.js'
+
+      const monitor = initiate()
+
+      setTimeout(() => {
+        throw new Error('function-error')
+      })
+      setTimeout(() => {
+        Promise.reject(new Error('promise-reject'))
+      })
+      setTimeout(() => {
+        let img = document.createElement('img')
+        img.setAttribute('src', 'error-src')
+        document.body.appendChild(img)
+      })
+    </script>
+  </head>
+  <body> </body>
+</html>
