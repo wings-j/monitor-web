@@ -1,5 +1,5 @@
 import { overwatch } from './modules/overwatch'
-import { ExceptionMessage, Message } from './types/message'
+import { ExceptionMessage, Message, RequestMessage } from './types/message'
 
 /**
  * Monitor Options
@@ -16,7 +16,7 @@ class Monitor {
 
   /**
    * Constructor
-   * @param options Options
+   * @param [options] Options
    */
   constructor(options: Partial<MonitorOptions>) {
     this.options = Object.assign({ server: '' }, options)
@@ -26,11 +26,12 @@ class Monitor {
       if (type === 'exception') {
         message = ExceptionMessage.from(ev)
       } else if (type === 'request') {
-        // TODO
+        message = RequestMessage.from(ev)
       }
 
       if (message) {
         if (this.options.server) {
+          // TODO 域名与服务器一致时不发送
         } else {
           console.log(message)
         }

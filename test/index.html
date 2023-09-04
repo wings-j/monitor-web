@@ -21,6 +21,30 @@
         img.setAttribute('src', 'error-src')
         document.body.appendChild(img)
       })
+      setTimeout(() => {
+        let xhr = new XMLHttpRequest()
+        xhr.open('GET', 'http://localhost:5500/test/404.html?a=0')
+        xhr.send()
+      })
+      setTimeout(() => {
+        let xhr = new XMLHttpRequest()
+        xhr.open('POST', 'http://localhost:5500/test/index.html')
+        xhr.send({ b: 1 })
+      })
+      setTimeout(() => {
+        let xhr = new XMLHttpRequest()
+        xhr.open('GET', 'http://localhost:5501/test/index.html')
+        xhr.send()
+      })
+      setTimeout(() => {
+        fetch('http://localhost:5500/test/404.html?a=0')
+      })
+      setTimeout(() => {
+        fetch('http://localhost:5500/test/index.html', { method: 'POST', body: { b: 1 } })
+      })
+      setTimeout(() => {
+        fetch('http://localhost:5501/test/index.html')
+      })
     </script>
   </head>
   <body> </body>

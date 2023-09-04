@@ -17,9 +17,10 @@ class ExceptionMessage implements Message {
 
   /**
    * Resolve from data
+   * @param [ev] Event
    * @return instance
    */
-  static from(ev: any) {
+  static from(ev: ErrorEvent | PromiseRejectionEvent | Event | any) {
     let value = new ExceptionMessage()
     if (ev instanceof ErrorEvent) {
       Object.assign(value, {
@@ -58,5 +59,33 @@ class ExceptionMessage implements Message {
     return value
   }
 }
+/**
+ * Request Message
+ */
+class RequestMessage implements Message {
+  method: string = ''
+  url: string = ''
+  body?: any
+  status: number = 0
+  data?: any
 
-export { ExceptionMessage, Message }
+  /**
+   * Resolve from data
+   * @param [ev] Event
+   * @return instance
+   */
+  static from(ev: { method?: string; url?: string; body?: any; status?: number; data?: any }) {
+    let value = new RequestMessage()
+    Object.assign(value, {
+      method: ev['method'] ?? '',
+      url: ev['url'] ?? '',
+      body: ev['body'],
+      status: ev['status'] ?? 0,
+      data: ev['data']
+    })
+
+    return value
+  }
+}
+
+export { ExceptionMessage, Message, RequestMessage }
