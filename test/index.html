@@ -8,7 +8,7 @@
     <script type="module">
       import { initiate } from './index.js'
 
-      const monitor = initiate()
+      const monitor = initiate('http://localhost:5500')
 
       setTimeout(() => {
         throw new Error('function-error')

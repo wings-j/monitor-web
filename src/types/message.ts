@@ -1,91 +1,164 @@
+import { CLSMetric, FIDMetric, LCPMetric, Metric } from 'web-vitals'
+
 /**
  * Message
  */
-interface Message {}
+class Message {
+  category: 'exception' | 'request' | 'analysis' | '' = ''
+  application: string = ''
+  url: string = window.location.href
+  time: number = Date.now()
+  meta: any
+
+  /**
+   * Constructor
+   * @param [category] Category
+   */
+  constructor(category: Message['category']) {
+    this.category = category
+  }
+}
 
 /**l
  * Exception Message
  */
-class ExceptionMessage implements Message {
-  type: 'error' | 'promise' | 'event' | '' = ''
-  message: string = ''
-  stack: string = ''
-  filename?: string
-  line?: number
-  column?: number
-  name?: string
-
+class ExceptionMessage extends Message {
   /**
    * Resolve from data
-   * @param [ev] Event
+   * @param [event] Event
    * @return instance
    */
-  static from(ev: ErrorEvent | PromiseRejectionEvent | Event | any) {
-    let value = new ExceptionMessage()
-    if (ev instanceof ErrorEvent) {
-      Object.assign(value, {
+  static from(event: ErrorEvent | PromiseRejectionEvent | Event | any) {
+    let payload: ExceptionMessage['payload']
+
+    if (event instanceof ErrorEvent) {
+      payload = {
         type: 'error',
-        message: ev.message ?? ev.error?.toString(),
-        stack: ev.error?.stack,
-        filename: ev.filename,
-        line: ev.error?.lineNo,
-        column: ev.error?.colNo,
-        name: ev.error?.name
-      })
-    } else if (ev instanceof PromiseRejectionEvent) {
-      Object.assign(value, {
+        message: event.message ?? event.error?.toString(),
+        stack: event.error?.stack,
+        filename: event.filename,
+        line: event.error?.lineNo,
+        column: event.error?.colNo,
+        name: event.error?.name
+      }
+    } else if (event instanceof PromiseRejectionEvent) {
+      payload = {
         type: 'promise',
-        message: ev.reason?.message ?? ev.reason?.toString(),
-        stack: ev.reason?.stack,
-        line: ev.reason?.lineNo,
-        column: ev.reason?.colNo,
-        name: ev.reason?.name
-      })
-    } else if (ev instanceof Event) {
-      Object.assign(value, {
+        message: event.reason?.message ?? event.reason?.toString(),
+        stack: event.reason?.stack,
+        line: event.reason?.lineNo,
+        column: event.reason?.colNo,
+        name: event.reason?.name
+      }
+    } else if (event instanceof Event) {
+      payload = {
         type: 'event',
-        message: ev.type,
-        stack: (ev.target as Element).outerHTML
-      })
+        message: event.type,
+        stack: (event.target as Element).outerHTML
+      }
     } else {
-      Object.assign(value, {
+      payload = {
         type: '',
-        message: ev.message,
-        stack: ev.stack,
-        name: ev.name
-      })
+        message: event.message,
+        stack: event.stack,
+        name: event.name
+      }
     }
 
-    return value
+    return new ExceptionMessage(payload)
+  }
+
+  payload: {
+    type: 'error' | 'promise' | 'event' | ''
+    message: string
+    stack: string
+    filename?: string
+    line?: number
+    column?: number
+    name?: string
+  }
+
+  /**
+   * Constructor
+   * @param [payload] Payload
+   */
+  constructor(payload: ExceptionMessage['payload']) {
+    super('exception')
+
+    this.payload = payload
   }
 }
 /**
  * Request Message
  */
-class RequestMessage implements Message {
-  method: string = ''
-  url: string = ''
-  body?: any
-  status: number = 0
-  data?: any
-
+class RequestMessage extends Message {
   /**
    * Resolve from data
-   * @param [ev] Event
+   * @param [request] Event
    * @return instance
    */
-  static from(ev: { method?: string; url?: string; body?: any; status?: number; data?: any }) {
-    let value = new RequestMessage()
-    Object.assign(value, {
-      method: ev['method'] ?? '',
-      url: ev['url'] ?? '',
-      body: ev['body'],
-      status: ev['status'] ?? 0,
-      data: ev['data']
-    })
+  static from(request: { method?: string; url?: string; body?: any; status?: number; data?: any }) {
+    let payload = {
+      method: request['method'] ?? '',
+      url: request['url'] ?? '',
+      body: request['body'],
+      status: request['status'] ?? 0,
+      data: request['data']
+    }
 
-    return value
+    return new RequestMessage(payload)
+  }
+
+  payload: {
+    method: string
+    url: string
+    body?: any
+    status: number
+    data?: any
+  }
+
+  /**
+   * Constructor
+   * @param [payload] Payload
+   */
+  constructor(payload: RequestMessage['payload']) {
+    super('request')
+
+    this.payload = payload
+  }
+}
+/**
+ * Analysis Message
+ */
+class AnalysisMessage extends Message {
+  /**
+   * Resolve from data
+   * @param [metric] Metric
+   * @return instance
+   */
+  static from(metric: LCPMetric | FIDMetric | CLSMetric) {
+    let payload = {
+      type: metric.name,
+      value: metric.value
+    }
+
+    return new AnalysisMessage(payload)
+  }
+
+  payload: {
+    type: Metric['name']
+    value: number
+  }
+
+  /**
+   * Constructor
+   * @param [payload] Payload
+   */
+  constructor(payload: AnalysisMessage['payload']) {
+    super('analysis')
+
+    this.payload = payload
   }
 }
 
-export { ExceptionMessage, Message, RequestMessage }
+export { AnalysisMessage, ExceptionMessage, Message, RequestMessage }

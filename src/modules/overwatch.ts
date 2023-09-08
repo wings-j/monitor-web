@@ -1,10 +1,22 @@
-const temp = new WeakMap<XMLHttpRequest, string[]>()
+import { Context } from '../types/context'
+
+const map = new WeakMap<XMLHttpRequest, string[]>()
 
 /**
  * Overwatch
+ * @param [context] Context
  * @param [callback] Callback
  */
-function overwatch(callback: (type: 'exception' | 'request', ev: any) => void) {
+function overwatch(context: Context, callback: (type: 'exception' | 'request', event: any) => void) {
+  let _callback = callback
+  callback = (type: 'exception' | 'request', event: any) => {
+    try {
+      _callback(type, event)
+    } catch (er) {
+      console.error(er)
+    }
+  }
+
   window.addEventListener(
     'error',
     ev => {
@@ -22,17 +34,18 @@ function overwatch(callback: (type: 'exception' | 'request', ev: any) => void) {
 
   XMLHttpRequest.prototype.open = new Proxy(XMLHttpRequest.prototype.open, {
     apply: (target: typeof XMLHttpRequest.prototype.open, that: XMLHttpRequest, args: [string, string]) => {
-      temp.set(that, args)
+      map.set(that, args)
 
       return Reflect.apply(target, that, args)
     }
   })
   XMLHttpRequest.prototype.send = new Proxy(XMLHttpRequest.prototype.send, {
     apply: (target: typeof XMLHttpRequest.prototype.send, that: XMLHttpRequest, args: [any]) => {
-      try {
-        if (temp.has(that)) {
-          that.addEventListener('timeout', () => {
-            let [method, url] = temp.get(that)!
+      if (map.has(that)) {
+        that.addEventListener('timeout', () => {
+          let request = map.get(that)
+          if (request) {
+            let [method, url] = request
             callback('request', {
               method,
               url,
@@ -40,26 +53,30 @@ function overwatch(callback: (type: 'exception' | 'request', ev: any) => void) {
               body: args[0]
             })
 
-            temp.delete(that)
-          })
+            map.delete(that)
+          }
+        })
 
-          that.addEventListener('readystatechange', () => {
-            if (that.readyState === XMLHttpRequest.DONE) {
-              let [method, url] = temp.get(that)!
-              callback('request', {
-                method,
-                url,
-                status: that.status,
-                body: args[0],
-                data: that.response
-              })
+        that.addEventListener('readystatechange', () => {
+          if (that.readyState === XMLHttpRequest.DONE) {
+            let request = map.get(that)
+            if (request) {
+              let [method, url] = request
+              let status = that.status
+              if (status >= 300) {
+                callback('request', {
+                  method,
+                  url,
+                  status,
+                  body: args[0],
+                  data: that.response
+                })
+              }
 
-              temp.delete(that)
+              map.delete(that)
             }
-          })
-        }
-      } catch (er) {
-        console.error(er)
+          }
+        })
       }
 
       return Reflect.apply(target, that, args)
@@ -73,13 +90,16 @@ function overwatch(callback: (type: 'exception' | 'request', ev: any) => void) {
       return Reflect.apply(target, that, args)
         .then((res: Response) => {
           res.text().then(data => {
-            callback('request', {
-              method,
-              url,
-              status: res.status,
-              body,
-              data
-            })
+            let status = res.status
+            if (status >= 400) {
+              callback('request', {
+                method,
+                url,
+                status,
+                body,
+                data
+              })
+            }
           })
 
           return res

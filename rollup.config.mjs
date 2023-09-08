@@ -1,3 +1,4 @@
+import RollupPluginNodeResolve from '@rollup/plugin-node-resolve'
 import RollupPluginTypescript from '@rollup/plugin-typescript'
 import RollupPluginDelete from 'rollup-plugin-delete'
 import PackageJson from './package.json' assert { type: 'json' }
@@ -12,7 +13,7 @@ const config = {
       file: 'test/index.js'
     }
   ],
-  plugins: [RollupPluginDelete(), RollupPluginTypescript()]
+  plugins: [RollupPluginDelete(), RollupPluginTypescript(), RollupPluginNodeResolve()]
 }
 
 export default config

@@ -1,37 +1,46 @@
+import { isFunction, isNil, merge } from 'lodash-es'
+import { analyze } from './modules/analyze'
 import { overwatch } from './modules/overwatch'
-import { ExceptionMessage, Message, RequestMessage } from './types/message'
-
-/**
- * Monitor Options
- */
-interface MonitorOptions {
-  server: string
-}
+import { send } from './modules/send'
+import { Context } from './types/context'
+import { AnalysisMessage, ExceptionMessage, Message, RequestMessage } from './types/message'
 
 /**
  * Monitor
  */
 class Monitor {
-  options: MonitorOptions
+  context: Context
 
   /**
    * Constructor
-   * @param [options] Options
+   * @param [context] Context
    */
-  constructor(options: Partial<MonitorOptions>) {
-    this.options = Object.assign({ server: '' }, options)
+  constructor(context: Partial<Context>) {
+    this.context = merge({ application: '', server: '', headers: {} }, context)
 
-    overwatch((type, ev) => {
+    analyze(this.context, res => {
+      let message = AnalysisMessage.from(res)
+      send(this.context, message)
+    })
+    overwatch(this.context, (type, res) => {
       let message: Message | undefined
       if (type === 'exception') {
-        message = ExceptionMessage.from(ev)
+        message = ExceptionMessage.from(res)
       } else if (type === 'request') {
-        message = RequestMessage.from(ev)
+        message = RequestMessage.from(res)
       }
-
       if (message) {
-        if (this.options.server) {
-          // TODO 域名与服务器一致时不发送
+        message.application = this.context.application
+        if (!isNil(this.context.meta)) {
+          if (isFunction(this.context.meta)) {
+            message.meta = this.context.meta()
+          } else {
+            message.meta = this.context.meta
+          }
+        }
+
+        if (this.context.server) {
+          send(this.context, message)
         } else {
           console.log(message)
         }
@@ -43,9 +52,10 @@ class Monitor {
 /**
  * Initiate
  * @param [server] The receive server address
+ * @param [context] Context
  */
-function initiate(server: string) {
-  let monitor = new Monitor({ server })
+function initiate(server: string, context: Partial<Context> = {}) {
+  let monitor = new Monitor({ server, ...context })
 
   return monitor
 }
