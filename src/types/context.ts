@@ -2,8 +2,8 @@
  * Context
  */
 interface Context {
-  application: string
   server: string
+  application: string
   headers: { [key: string]: string }
   meta?: () => any | any
 }

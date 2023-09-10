@@ -1,7 +1,7 @@
 {
-  "name": "monitor-web",
+  "name": "@wings-j/monitor-web",
   "version": "0.0.0",
-  "description": "Web monitor for errors.",
+  "description": "Web monitor for exceptions, requests and analysis.",
   "author": "WingsJ",
   "license": "MIT",
   "repository": {
@@ -14,7 +14,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "dev": "rollup -c -w",
-    "build": "rollup -c"
+    "build": "rollup -c",
+    "release": "npm publish --access=public"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.2.1",
